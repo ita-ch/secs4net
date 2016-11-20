@@ -19,7 +19,7 @@ namespace Secs4Net
         {
             get
             {
-                var tmp = GetEncodedData();
+                var tmp = GetEncodedBytes();
                 var result = tmp.ToArray();
                 SecsGem.EncodedBytePool.Return(tmp.Array);
                 return result;
@@ -88,59 +88,60 @@ namespace Secs4Net
         /// Encode item to raw data buffer
         /// </summary>
         /// <param name="buffer"></param>
-        /// <returns></returns>
+        /// <returns>total bytes length</returns>
         internal uint EncodeTo(IList<ArraySegment<byte>> buffer)
         {
-            var bytes = GetEncodedData();
-            var length = unchecked((uint)bytes.Count);
+            var bytes = GetEncodedBytes();
             buffer.Add(bytes);
+
+            var length = unchecked((uint)bytes.Count);
             if (Format != SecsFormat.List)
                 return length;
+
             foreach (var subItem in Items)
                 length += subItem.EncodeTo(buffer);
+
             return length;
         }
 
-        protected abstract ArraySegment<byte> GetEncodedData();
+        protected abstract ArraySegment<byte> GetEncodedBytes();
 
         /// <summary>
-        /// Encode Item header + value0 (initial array only)
+        /// Get encoded bytes buffer array: encoded header only
         /// </summary>
         /// <param name="format"></param>
-        /// <param name="valueCount">Item value0 bytes length</param>
-        /// <param name="headerlength">return header bytes length</param>
-        /// <returns>header bytes + initial bytes of value0 </returns>
-        protected static unsafe byte[] EncodeValue(SecsFormat format, int valueCount, out int headerlength)
+        /// <param name="byteLength">Item value bytes length</param>
+        /// <param name="headerlength">encoded header bytes length</param>
+        /// <returns>encoded buffer</returns>
+        protected static unsafe byte[] GetEncodedBuffer(SecsFormat format, int byteLength, out int headerlength)
         {
-            var ptr = (byte*)Unsafe.AsPointer(ref valueCount);
-            if (valueCount <= 0xff)
+            var ptr = (byte*)Unsafe.AsPointer(ref byteLength);
+            var result = SecsGem.EncodedBytePool.Rent(byteLength + 4);
+            if (byteLength <= 0xff)
             {//	1 byte
                 headerlength = 2;
-                var result = SecsGem.EncodedBytePool.Rent(valueCount + 2);
                 result[0] = (byte)((byte)format | 1);
                 result[1] = ptr[0];
                 return result;
             }
-            if (valueCount <= 0xffff)
+            if (byteLength <= 0xffff)
             {//	2 byte
                 headerlength = 3;
-                var result = SecsGem.EncodedBytePool.Rent(valueCount + 3);
                 result[0] = (byte)((byte)format | 2);
                 result[1] = ptr[1];
                 result[2] = ptr[0];
                 return result;
             }
-            if (valueCount <= 0xffffff)
+            if (byteLength <= 0xffffff)
             {//	3 byte
                 headerlength = 4;
-                var result = SecsGem.EncodedBytePool.Rent(valueCount + 4);
                 result[0] = (byte)((byte)format | 3);
                 result[1] = ptr[2];
                 result[2] = ptr[1];
                 result[3] = ptr[0];
                 return result;
             }
-            throw new ArgumentOutOfRangeException(nameof(valueCount), valueCount, string.Format(Resources.ValueItemDataLength__0__Overflow, valueCount));
+            throw new ArgumentOutOfRangeException(nameof(byteLength), byteLength, string.Format(Resources.ValueItemDataLength__0__Overflow, byteLength));
         }
 
         protected static ArraySegment<byte> EncodEmpty(SecsFormat format)

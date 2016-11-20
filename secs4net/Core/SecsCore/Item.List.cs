@@ -44,7 +44,7 @@ namespace Secs4Net
             ReturnItemArray();
         }
 
-        protected override ArraySegment<byte> GetEncodedData()
+        protected override ArraySegment<byte> GetEncodedBytes()
         {
             var arr = SecsGem.EncodedBytePool.Rent(2);
             arr[0] = (byte)SecsFormat.List | 1;

@@ -26,14 +26,14 @@ namespace Secs4Net
             _pool?.Return(this);
         }
 
-        protected override ArraySegment<byte> GetEncodedData()
+        protected override ArraySegment<byte> GetEncodedBytes()
         {
             if (string.IsNullOrEmpty(_str))
                 return EncodEmpty(Format);
 
             var bytelength = _str.Length;
             int headerLength;
-            var result = EncodeValue(Format, bytelength, out headerLength);
+            var result = GetEncodedBuffer(Format, bytelength, out headerLength);
             var encoder = Format == SecsFormat.ASCII ? Encoding.ASCII : SecsExtension.JIS8Encoding;
             encoder.GetBytes(_str, 0, _str.Length, result, headerLength);
             return new ArraySegment<byte>(result, 0, headerLength + bytelength);
