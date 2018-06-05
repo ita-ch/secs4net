@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -79,7 +80,7 @@ namespace Secs4Net
                             // 0: get total message length 4 bytes
                             (ref int length, out int need) =>
                             {
-                                if (!CheckAvailable(ref length, 4, out need))
+                                if (!CheckAvailable(length, required: 4, out need))
                                     return 0;
 
                                 Array.Reverse(Buffer, _decodeIndex, 4);
@@ -99,7 +100,7 @@ namespace Secs4Net
                             // 1: get message header 10 bytes
                             (ref int length, out int need) =>
                             {
-                                if (!CheckAvailable(ref length, 10, out need))
+                                if (!CheckAvailable(length, required:  10, out need))
                                     return 1;
 
                                 _msgHeader = MessageHeader.Decode(Buffer, _decodeIndex);
@@ -138,7 +139,7 @@ namespace Secs4Net
                             // 2: get _format + lengthBits(2bit) 1 byte
                             (ref int length, out int need) =>
                             {
-                                if (!CheckAvailable(ref length, 1, out need))
+                                if (!CheckAvailable(length, required:  1, out need))
                                     return 2;
 
                                 _format = (SecsFormat) (Buffer[_decodeIndex] & 0xFC);
@@ -151,7 +152,7 @@ namespace Secs4Net
                             // 3: get _itemLength _lengthBits bytes, at most 3 byte
                             (ref int length, out int need) =>
                             {
-                                if (!CheckAvailable(ref length, _lengthBits, out need))
+                                if (!CheckAvailable(length, required:  _lengthBits, out need))
                                     return 3;
 
                                 Array.Reverse(Buffer, _decodeIndex, _lengthBits);
@@ -192,12 +193,12 @@ namespace Secs4Net
                                 }
                                 else
                                 {
-                                    if (!CheckAvailable(ref length, _itemLength, out need))
+                                    if (!CheckAvailable(length, required:  _itemLength, out need))
                                         return 4;
 
                                     item = _itemLength == 0
                                                ? _format.BytesDecode()
-                                               : _format.BytesDecode(Buffer, ref _decodeIndex, ref _itemLength);
+                                               : _format.BytesDecode(Buffer, _decodeIndex, _itemLength);
                                     Trace.WriteLine($"Complete Item: {_format}");
 
                                     _decodeIndex += _itemLength;
@@ -220,7 +221,7 @@ namespace Secs4Net
 
                                 var list = _stack.Peek();
                                 list.Add(item);
-                                while (list.Count == list.Capacity)
+                                while (list.PooledItems.Count == list.Capacity)
                                 {
                                     using (var buffer = _stack.Pop())
                                         item = Item.L(buffer.PooledItems);
@@ -281,13 +282,13 @@ namespace Secs4Net
                     return Item.L(buffer.PooledItems);
                 }
             }
-            var item = length == 0 ? format.BytesDecode() : format.BytesDecode(bytes, ref index, ref length);
+            var item = length == 0 ? format.BytesDecode() : format.BytesDecode(bytes, index, length);
             index += length;
             return item;
         }
 
 
-        private static bool CheckAvailable(ref int length, int required, out int need)
+        private static bool CheckAvailable(in int length, int required, out int need)
         {
             if (length < required)
                 need = required - length;
@@ -325,8 +326,8 @@ namespace Secs4Net
             {
                 if (need > Buffer.Length)
                 {
-                    var newSize = need*2;
-                    Trace.WriteLine($@"<<buffer resizing>>: current size = {Buffer.Length}, new size = {newSize}");
+                    var newSize = need * 2;
+                    Trace.WriteLine($"<<buffer resizing>>: current size = {Buffer.Length}, new size = {newSize}");
 
                     // increase buffer size
                     Buffer = new byte[newSize];
@@ -344,8 +345,7 @@ namespace Secs4Net
                     if (nextStepReqiredCount > Buffer.Length)
                     {
                         var newSize = Math.Max(_messageDataLength/2, nextStepReqiredCount)*2;
-                        Trace.WriteLine(
-                                        $@"<<buffer resizing>>: current size = {Buffer.Length}, remained = {remainCount}, new size = {newSize}");
+                        Trace.WriteLine($"<<buffer resizing>>: current size = {Buffer.Length}, remained = {remainCount}, new size = {newSize}");
 
                         // out of total buffer size
                         // increase buffer size
@@ -356,8 +356,7 @@ namespace Secs4Net
                     }
                     else
                     {
-                        Trace.WriteLine(
-                                        $@"<<buffer recyling>>: avalible = {BufferCount}, need = {nextStepReqiredCount}, remained = {remainCount}");
+                        Trace.WriteLine($"<<buffer recyling>>: avalible = {BufferCount}, need = {nextStepReqiredCount}, remained = {remainCount}");
 
                         // move remained data to buffer's head
                         Array.Copy(Buffer, BufferOffset - remainCount, Buffer, 0, remainCount);
@@ -379,28 +378,27 @@ namespace Secs4Net
             internal static ItemListBuffer Create(int capacity)
             {
                 var result = Pool.Rent();
-                result.Count = 0; // reset filled index
-                result.PooledItems = new ArraySegment<SecsItem>(SecsItemArrayPool.Pool.Rent(capacity), 0, capacity);
+                result.Capacity = capacity; // reset filled index
+                result.PooledItems.Clear();
                 return result;
             }
 
             private ItemListBuffer(Pool<ItemListBuffer> pool)
             {
                 _pool = pool;
+                PooledItems = new List<SecsItem>();
             }
 
             private readonly Pool<ItemListBuffer> _pool;
 
-            internal ArraySegment<SecsItem> PooledItems { get; private set; }
+            internal List<SecsItem> PooledItems { get; }
 
             internal void Add(SecsItem secsItem)
             {
-                PooledItems.Array[Count++] = secsItem;
+                PooledItems.Add(secsItem);
             }
 
-            internal int Capacity => PooledItems.Count;
-
-            internal int Count { get; private set; }
+            internal int Capacity { get; private set; }
 
             public void Dispose()
             {

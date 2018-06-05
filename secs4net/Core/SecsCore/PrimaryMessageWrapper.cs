@@ -5,7 +5,7 @@ using static Secs4Net.Item;
 
 namespace Secs4Net
 {
-    public sealed class PrimaryMessageWrapper
+    public sealed class PrimaryMessageWrapper : IDisposable
     {
         private int _isReplied = 0;
         private readonly WeakReference<SecsGem> _secsGem;
@@ -61,5 +61,6 @@ namespace Secs4Net
         }
 
         public override string ToString() => Message.ToString();
+        public void Dispose() => Message.Dispose();
     }
 }

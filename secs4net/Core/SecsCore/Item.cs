@@ -29,47 +29,32 @@ namespace Secs4Net
         /// <summary>
         /// Data item
         /// </summary>
-        public virtual IEnumerable Values
-        {
-            get { throw new NotSupportedException("This is not a value item"); }
-        }
+        public virtual IEnumerable Values => throw new NotSupportedException("This is not a value item");
 
         /// <summary>
         /// List item
         /// </summary>
-        public virtual IReadOnlyList<SecsItem> Items
-        {
-            get { throw new NotSupportedException("This is not a list Item"); }
-        }
+        public virtual IReadOnlyList<SecsItem> Items => throw new NotSupportedException("This is not a list Item");
 
         /// <summary>
         /// get first value by specific type
         /// </summary>
         /// <typeparam name="T">value type</typeparam>
         /// <returns></returns>
-        public virtual T GetValue<T>() where T : struct
-        {
-            throw new NotSupportedException("This is not a value Item");
-        }
+        public virtual T GetValue<T>() where T : struct => throw new NotSupportedException("This is not a value Item");
 
         /// <summary>
         /// get value array by specific type
         /// </summary>
         /// <typeparam name="T">value type</typeparam>
         /// <returns></returns>
-        public virtual T[] GetValues<T>() where T : struct
-        {
-            throw new NotSupportedException("This is not a value Item");
-        }
+        public virtual T[] GetValues<T>() where T : struct => throw new NotSupportedException("This is not a value Item");
 
         /// <summary>
         /// get string value
         /// </summary>
         /// <returns></returns>
-        public virtual string GetString()
-        {
-            throw new NotSupportedException("This is not a string value Item");
-        }
+        public virtual string GetString() => throw new NotSupportedException("This is not a string value Item");
 
         public static explicit operator string(SecsItem secsItem) => secsItem.GetString();
         public static explicit operator byte(SecsItem secsItem) => secsItem.GetValue<byte>();
