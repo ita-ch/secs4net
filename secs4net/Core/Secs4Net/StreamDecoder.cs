@@ -108,7 +108,7 @@ namespace Secs4Net
                 if (!CheckAvailable(length, 10, out need))
                     return 1;
 
-                _msgHeader = MessageHeader.Decode(_buffer, _decodeIndex);
+				_msgHeader = MessageHeader.Decode(new ReadOnlySpan<byte>(_buffer, _decodeIndex, _buffer.Length - _decodeIndex));
                 _decodeIndex += 10;
                 _messageDataLength -= 10;
                 length -= 10;

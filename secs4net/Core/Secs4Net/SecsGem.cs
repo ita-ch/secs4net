@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +14,8 @@ namespace Secs4Net
 {
     public sealed class SecsGem : IDisposable
     {
+		private static readonly ArrayPool<byte> EncodingArrayPool = ArrayPool<byte>.Create(int.MaxValue, 10);
+ 
         /// <summary>
         /// HSMS connection state changed event
         /// </summary>
@@ -132,7 +137,7 @@ namespace Secs4Net
         private readonly Action _stopImpl;
 
         private static readonly SecsMessage ControlMessage = new SecsMessage(0, 0, string.Empty);
-        private static readonly ArraySegment<byte> ControlMessageLengthBytes = new ArraySegment<byte>(new byte[] { 0, 0, 0, 10 });
+        private static readonly ReadOnlyMemory<byte> ControlMessageLengthBytes = new byte[] { 0, 0, 0, 10 };
         private static readonly DefaultSecsGemLogger DefaultLogger = new DefaultSecsGemLogger();
         private readonly SystemByteGenerator _systemByte = new SystemByteGenerator();
 
@@ -391,7 +396,9 @@ namespace Secs4Net
                 {
                     _logger.MessageIn(msg, systembyte);
                     _logger.Warning("Received Unrecognized Device Id Message");
-                    SendDataMessageAsync(new SecsMessage(9, 1, "Unrecognized Device Id", Item.B(header.EncodeTo(new byte[10])), replyExpected: false), NewSystemId);
+					var headerBytes = new byte[10];
+					header.EncodeTo(headerBytes);
+					SendDataMessageAsync(new SecsMessage(9, 1, "Unrecognized Device Id", Item.B(headerBytes), replyExpected: false), NewSystemId);
                     return;
                 }
 
@@ -427,19 +434,24 @@ namespace Secs4Net
                 _replyExpectedMsgs[systembyte] = token;
             }
 
-            var eap = new SocketAsyncEventArgs
+			var header = new MessageHeader(
+				deviceId: 0xFFFF,
+				messageType: msgType,
+				systemBytes: systembyte
+			);
+
+			Memory<byte> buffer = new byte[14];
+
+			ControlMessageLengthBytes.CopyTo(buffer);
+			header.EncodeTo(buffer.Span.Slice(4));
+
+			var eap = new SocketAsyncEventArgs
             {
-                BufferList = new List<ArraySegment<byte>>(2) {
-                    ControlMessageLengthBytes,
-                    new ArraySegment<byte>(new MessageHeader(
-                        deviceId: 0xFFFF,
-                        messageType: msgType,
-                        systemBytes: systembyte
-                    ).EncodeTo(new byte[10]))
-                },
                 UserToken = token,
             };
-            eap.Completed += _sendControlMessageCompleteHandler;
+
+			eap.SetBuffer(buffer);
+			eap.Completed += _sendControlMessageCompleteHandler;
             if (!_socket.SendAsync(eap))
                 SendControlMessageCompleteHandler(_socket, eap);
         }
@@ -484,17 +496,30 @@ namespace Secs4Net
                 systemBytes: systembyte
             );
 
-            var bufferList = msg.RawDatas.Value;
-            bufferList[1] = new ArraySegment<byte>(header.EncodeTo(new byte[10]));
-            var eap = new SocketAsyncEventArgs
-            {
-                BufferList = bufferList,
-                UserToken = token,
-            };
-            eap.Completed += _sendDataMessageCompleteHandler;
-            if (!_socket.SendAsync(eap))
-                SendDataMessageCompleteHandler(_socket, eap);
+			var arr = EncodingArrayPool.Rent(int.MaxValue);
+			try
+			{
+				Memory<byte> buffer = arr;
 
+				header.EncodeTo(buffer.Span.Slice(4));
+				var messageLength = msg.Encode(buffer.Span.Slice(14));
+				BinaryPrimitives.WriteInt32BigEndian(buffer.Span, messageLength);
+
+				var eap = new SocketAsyncEventArgs
+				{
+					UserToken = token,
+				};
+				eap.SetBuffer(buffer.Slice(0, 14 + messageLength));
+				eap.Completed += _sendDataMessageCompleteHandler;
+
+				if (!_socket.SendAsync(eap))
+					SendDataMessageCompleteHandler(_socket, eap);
+
+			}
+			finally
+			{
+				EncodingArrayPool.Return(arr);
+			}
             return token.Task;
         }
 

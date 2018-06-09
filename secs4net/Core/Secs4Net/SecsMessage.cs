@@ -35,17 +35,6 @@ namespace Secs4Net
 
         public string Name { get; set; }
 
-        internal readonly Lazy<List<ArraySegment<byte>>> RawDatas;
-
-        public IReadOnlyList<ArraySegment<byte>> RawBytes => RawDatas.Value.AsReadOnly();
-
-        private static readonly List<ArraySegment<byte>> EmptyMsgDatas =
-            new List<ArraySegment<byte>>
-            {
-                new ArraySegment<byte>(new byte[]{ 0, 0, 0, 10 }), // total length = header
-                new ArraySegment<byte>(Array.Empty<byte>())        // header placeholder
-            };
-
         /// <summary>
         /// constructor of SecsMessage
         /// </summary>
@@ -64,49 +53,32 @@ namespace Secs4Net
             Name = name;
             ReplyExpected = replyExpected;
             SecsItem = item;
-            RawDatas = new Lazy<List<ArraySegment<byte>>>(() =>
-            {
-                if (SecsItem is null)
-                    return EmptyMsgDatas;
-
-                var result = new List<ArraySegment<byte>> {
-                    default,    // total length
-                    new ArraySegment<byte>(Array.Empty<byte>())     // header
-                    // item
-                };
-
-                var length = 10 + SecsItem.EncodeTo(result); // total length = item + header
-
-                var msgLengthByte = BitConverter.GetBytes(length);
-                Array.Reverse(msgLengthByte);
-                result[0] = new ArraySegment<byte>(msgLengthByte);
-
-                return result;
-            });
         }
 
-        #region ISerializable Members
-        ////Binary Serialization
-        //SecsMessage(SerializationInfo info, StreamingContext context)
-        //{
-        //    S = info.GetByte(nameof(S));
-        //    F = info.GetByte(nameof(F));
-        //    ReplyExpected = info.GetBoolean(nameof(ReplyExpected));
-        //    Name = info.GetString(nameof(Name));
-        //    _rawDatas = Lazy.Create(info.GetValue(nameof(_rawDatas), typeof(ReadOnlyCollection<RawData>)) as ReadOnlyCollection<RawData>);
-        //    int i = 0;
-        //    if (_rawDatas.Value.Count > 2)
-        //        SecsItem = Decode(_rawDatas.Value.Skip(2).SelectMany(arr => arr.Bytes).ToArray(), ref i);
-        //}
+		internal int Encode(Span<byte> buffer) => SecsItem?.EncodeTo(buffer) ?? 0;
 
-        //[SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
-        //void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) {
-        //    info.AddValue(nameof(S), S);
-        //    info.AddValue(nameof(F), F);
-        //    info.AddValue(nameof(ReplyExpected), ReplyExpected);
-        //    info.AddValue(nameof(Name), Name);
-        //    info.AddValue(nameof(_rawDatas), _rawDatas.Value);
-        //}
-        #endregion
-    }
+		#region ISerializable Members
+		////Binary Serialization
+		//SecsMessage(SerializationInfo info, StreamingContext context)
+		//{
+		//    S = info.GetByte(nameof(S));
+		//    F = info.GetByte(nameof(F));
+		//    ReplyExpected = info.GetBoolean(nameof(ReplyExpected));
+		//    Name = info.GetString(nameof(Name));
+		//    _rawDatas = Lazy.Create(info.GetValue(nameof(_rawDatas), typeof(ReadOnlyCollection<RawData>)) as ReadOnlyCollection<RawData>);
+		//    int i = 0;
+		//    if (_rawDatas.Value.Count > 2)
+		//        SecsItem = Decode(_rawDatas.Value.Skip(2).SelectMany(arr => arr.Bytes).ToArray(), ref i);
+		//}
+
+		//[SecurityPermission(SecurityAction.LinkDemand, SerializationFormatter = true)]
+		//void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) {
+		//    info.AddValue(nameof(S), S);
+		//    info.AddValue(nameof(F), F);
+		//    info.AddValue(nameof(ReplyExpected), ReplyExpected);
+		//    info.AddValue(nameof(Name), Name);
+		//    info.AddValue(nameof(_rawDatas), _rawDatas.Value);
+		//}
+		#endregion
+	}
 }

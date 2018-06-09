@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <PackageId>Secs4Net</PackageId>
     <Product>Secs4Net</Product>
     <Copyright>Copyright © secs4net 2017</Copyright>
@@ -22,13 +22,11 @@
     <Version>2.0.0</Version>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <LangVersion>7.2</LangVersion>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="System.Buffers" Version="4.5.0" />
+    <PackageReference Include="System.Memory" Version="4.5.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>

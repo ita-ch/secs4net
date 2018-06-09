@@ -38,7 +38,12 @@ namespace Secs4Net
             if (!Message.ReplyExpected || !_secsGem.TryGetTarget(out var secsGem))
                 return ReplyAsyncTrueCache;
 
-            replyMessage = replyMessage ?? new SecsMessage(9, 7, "Unknown Message", Item.B(_header.EncodeTo(new byte[10])), replyExpected: false);
+			if (replyMessage == null)
+			{
+				var bytes = new byte[10];
+				_header.EncodeTo(bytes);
+				replyMessage = new SecsMessage(9, 7, "Unknown Message", Item.B(bytes), replyExpected: false);
+			}
             replyMessage.ReplyExpected = false;
 
             return secsGem.SendDataMessageAsync(replyMessage, replyMessage.S == 9 ? secsGem.NewSystemId : _header.SystemBytes)

@@ -69,7 +69,7 @@ namespace Secs4Net.Sml
                     writer.Write('\'');
                     break;
                 case SecsFormat.Binary:
-                    writer.Write(item.GetValues<byte>().ToHexString());
+                    writer.Write(item.GetValues<byte>());
                     break;
                 case SecsFormat.F4:
                     writer.Write(string.Join(" ", item.GetValues<float>()));
@@ -125,7 +125,7 @@ namespace Secs4Net.Sml
                     case SecsFormat.List: return WriteListAsnc(writer, item, indent, indentStr);
                     case SecsFormat.ASCII:
                     case SecsFormat.JIS8: return writer.WriteAsync($"'{item.GetString()}'");
-                    case SecsFormat.Binary: return writer.WriteAsync(item.GetValues<byte>().ToHexString());
+                    case SecsFormat.Binary: return writer.WriteAsync(string.Join(" ", item.GetValues<byte>()));
                     case SecsFormat.F4: return writer.WriteAsync(string.Join(" ", item.GetValues<float>()));
                     case SecsFormat.F8: return writer.WriteAsync(string.Join(" ", item.GetValues<double>()));
                     case SecsFormat.I1: return writer.WriteAsync(string.Join(" ", item.GetValues<sbyte>()));
