@@ -13,7 +13,7 @@ namespace HsmsWebHost.Hubs
 {
     public class HsmsHub: Hub
 	{
-		private readonly ConcurrentDictionary<string, (SecsGem gem, ConcurrentDictionary<int, PrimaryMessageWrapper> penddingMessages)> _devices = new ConcurrentDictionary<string, (SecsGem, ConcurrentDictionary<int, PrimaryMessageWrapper>)>();
+		private static readonly ConcurrentDictionary<string, (SecsGem gem, ConcurrentDictionary<int, PrimaryMessageWrapper> penddingMessages)> _devices = new ConcurrentDictionary<string, (SecsGem, ConcurrentDictionary<int, PrimaryMessageWrapper>)>();
 
         public override Task OnConnectedAsync()
 		{
@@ -35,7 +35,7 @@ namespace HsmsWebHost.Hubs
 			var caller = Clients.Caller;
 			gem.ConnectionChanged += (sender, e) => 
 				caller.SendAsync(nameof(gem.ConnectionChanged), gem.State.ToString());
-
+            gem.Logger = new DeviceLogger(caller);
 			gem.PrimaryMessageReceived += (_, primaryMessage) =>
 			{
 				if (device.penddingMessages.TryAdd(primaryMessage.MessageId, primaryMessage))
@@ -45,15 +45,15 @@ namespace HsmsWebHost.Hubs
 			};
 
 			gem.Start();
+            device.gem = gem;
 
-			_devices.TryAdd(Context.ConnectionId, device);
+            _devices.TryAdd(Context.ConnectionId, device);
 
 			return base.OnConnectedAsync();
 		}
 
 		(IPAddress ip, int port, bool active) ParseQueryString(HttpContext httpContext)
 		{
-
 			var query = httpContext?.Request.Query;
 			if (query == null)
 			{
@@ -92,7 +92,26 @@ namespace HsmsWebHost.Hubs
 			Context.Abort();
 		}
 
-		public override Task OnDisconnectedAsync(Exception exception)
+        public async Task ReplyMessage(int messageId, string sml)
+        {
+            if (_devices.TryGetValue(Context.ConnectionId, out var device) &&
+                device.penddingMessages.TryRemove(messageId, out var primaryMsg))
+            {
+                await primaryMsg.ReplyAsync(sml.ToSecsMessage());
+            }
+        }
+
+        public async Task<string> SendMessage(string sml)
+        {
+            if (_devices.TryGetValue(Context.ConnectionId, out var device))
+            {
+                var msg = await device.gem.SendAsync(sml.ToSecsMessage());
+                return msg.ToSml();
+            }
+            return string.Empty;
+        }
+
+        public override Task OnDisconnectedAsync(Exception exception)
 		{
 			if (exception == null && _devices.TryRemove(Context.ConnectionId, out var device))
 			{
@@ -101,5 +120,21 @@ namespace HsmsWebHost.Hubs
 			}
 			return base.OnDisconnectedAsync(exception);
 		}
-	}
+
+        sealed class DeviceLogger : ISecsGemLogger
+        {
+            private readonly IClientProxy _client;
+            public DeviceLogger(IClientProxy client)
+            {
+                _client = client;
+            }
+
+            public void Debug(string msg) => _client.SendAsync("Debug", msg);
+            public void Error(string msg, Exception ex = null) => _client.SendAsync("Error", msg + "\n" + ex);
+            public void Info(string msg) => _client.SendAsync("Info", msg);
+            public void MessageIn(SecsMessage msg, int systembyte) => throw new NotImplementedException();
+            public void MessageOut(SecsMessage msg, int systembyte) => throw new NotImplementedException();
+            public void Warning(string msg) => _client.SendAsync("Warning", msg);
+        }
+    }
 }
