@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -37,15 +38,17 @@ namespace Secs4Net
 			return headerLength + bytelength;
 		};
 
-		private static Encoder GetEncoder<T>() where T : unmanaged =>
+		private static unsafe Encoder GetEncoder<T>() where T : unmanaged =>
 			(item, buffer) =>
 			{
-				Span<T> value = (T[])item._values;
-				var bytes = MemoryMarshal.AsBytes(value);
+				var bytes = MemoryMarshal.AsBytes(Unsafe.As<T[]>(item._values).AsSpan());
 				var headerLength = EncodeItemHeader(item.Format, bytes.Length, buffer);
-				var dataBytes = buffer.Slice(headerLength);
+				var dataBytes = buffer.Slice(headerLength, bytes.Length);
 				bytes.CopyTo(dataBytes);
-				dataBytes.ReverseByOffset(Unsafe.SizeOf<T>());
+				if (!BitConverter.IsLittleEndian)
+				{
+					dataBytes.ReverseByOffset(sizeof(T));
+				}
 				return headerLength + bytes.Length;
 			};
 
@@ -110,6 +113,9 @@ namespace Secs4Net
 
         public bool IsMatch(Item target)
         {
+			if (ReferenceEquals(this, target))
+				return true;
+
             if (Format != target.Format)
                 return false;
 
@@ -119,26 +125,26 @@ namespace Secs4Net
             if (Count == 0)
                 return true;
 
-            switch (target.Format)
-            {
-                case SecsFormat.List:
-                    return IsMatch(
-                        Unsafe.As<IReadOnlyList<Item>>(_values),
-                        Unsafe.As<IReadOnlyList<Item>>(target._values));
-                case SecsFormat.ASCII:
-                case SecsFormat.JIS8:
-                    return Unsafe.As<string>(_values) == Unsafe.As<string>(target._values);
-                default:
-                    //return memcmp(Unsafe.As<byte[]>(_values), Unsafe.As<byte[]>(target._values), Buffer.ByteLength((Array)_values)) == 0;
-                    return UnsafeCompare(Unsafe.As<Array>(_values), Unsafe.As<Array>(target._values));
-            }
+			switch (target.Format)
+			{
+				case SecsFormat.List:
+					return IsMatch(
+						Unsafe.As<IReadOnlyList<Item>>(_values),
+						Unsafe.As<IReadOnlyList<Item>>(target._values));
+				case SecsFormat.ASCII:
+				case SecsFormat.JIS8:
+					return Unsafe.As<string>(_values) == Unsafe.As<string>(target._values);
+				default:
+					//return memcmp(Unsafe.As<byte[]>(_values), Unsafe.As<byte[]>(target._values), Buffer.ByteLength((Array)_values)) == 0;
+					return UnsafeCompare(Unsafe.As<Array>(_values), Unsafe.As<Array>(target._values));
+			}
 
-            //[DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
-            //static extern int memcmp(byte[] b1, byte[] b2, long count);
-            // http://stackoverflow.com/questions/43289/comparing-two-byte-arrays-in-net/8808245#8808245
-            unsafe bool UnsafeCompare(Array a1, Array a2)
+			//[DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
+			//static extern int memcmp(byte[] b1, byte[] b2, long count);
+			// http://stackoverflow.com/questions/43289/comparing-two-byte-arrays-in-net/8808245#8808245
+			unsafe bool UnsafeCompare(Array a1, Array a2)
             {
-                int length = Buffer.ByteLength(a2);
+				int length = Buffer.ByteLength(a2);		
                 fixed (byte* p1 = Unsafe.As<byte[]>(a1), p2 = Unsafe.As<byte[]>(a2))
                 {
                     byte* x1 = p1, x2 = p2;
@@ -159,7 +165,7 @@ namespace Secs4Net
                         return false;
                 return true;
             }
-        }
+		}
 
 		public override string ToString()
 		{
@@ -305,24 +311,24 @@ namespace Secs4Net
 			return length;
 		}
 
-		private static int EncodeItemHeader(SecsFormat format, int dataLength, Span<byte> buffer)
+		private static unsafe int EncodeItemHeader(SecsFormat format, int dataLength, Span<byte> buffer)
         {
 			Span<byte> lengthBytes = stackalloc byte[4];
 			MemoryMarshal.Write(lengthBytes, ref dataLength);
             if (dataLength <= 0xff)
             {//	1 byte
-				buffer[0] = (byte)((byte)format | 0b_01);
+				buffer[0] = (byte)((int)format | 0b_01);
 				buffer[1] = lengthBytes[0];
 				return 2;
             }
-            if (dataLength <= 0xffff)
+            if (dataLength <= 0xff_ff)
             {//	2 byte
 				buffer[0] = (byte)((byte)format | 0b_10);
 				buffer[1] = lengthBytes[1];
 				buffer[2] = lengthBytes[0];
 				return 3;
 			}
-            if (dataLength <= 0xffffff)
+            if (dataLength <= 0xff_ff_ff)
             {//	3 byte
 				buffer[0] = (byte)((byte)format | 0b_11);
 				buffer[1] = lengthBytes[2];
@@ -330,7 +336,7 @@ namespace Secs4Net
 				buffer[3] = lengthBytes[0];
 				return 4;
 			}
-            throw new ArgumentOutOfRangeException(nameof(dataLength), dataLength, $"Item data length:{dataLength} is overflow");
+			throw new ArgumentOutOfRangeException(nameof(dataLength), dataLength, $"Item data length:{dataLength} is overflow");
         }
 
         internal static Item BytesDecode(in SecsFormat format, in byte[] data, in int index, in int length)
@@ -363,5 +369,5 @@ namespace Secs4Net
                 return values;
             }
         }
-    }
+	}
 }

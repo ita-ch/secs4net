@@ -81,18 +81,15 @@ namespace Secs4Net
 
 			do
 			{
-				ref var first = ref spanFirst;
-				ref var last = ref Unsafe.Add(ref spanFirst, offset - 1);
+				ref var offsetLast = ref Unsafe.Add(ref spanFirst, offset - 1);
 				do
 				{
-					var temp = first;
-					first = last;
-					last = temp;
-					first = ref Unsafe.Add(ref first, 1);
-					last = ref Unsafe.Add(ref last, -1);
-				} while (Unsafe.IsAddressLessThan(ref first, ref last));
-
-				spanFirst = first;
+					var temp = spanFirst;
+					spanFirst = offsetLast;
+					offsetLast = temp;
+					spanFirst = ref Unsafe.Add(ref spanFirst, 1);
+					offsetLast = ref Unsafe.Add(ref offsetLast, -1);
+				} while (Unsafe.IsAddressLessThan(ref spanFirst, ref offsetLast));
 			} while (Unsafe.IsAddressLessThan(ref spanFirst, ref spanLast));
 		}
 	}

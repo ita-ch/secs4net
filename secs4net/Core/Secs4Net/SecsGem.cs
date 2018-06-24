@@ -496,7 +496,7 @@ namespace Secs4Net
                 systemBytes: systembyte
             );
 
-			var arr = EncodingArrayPool.Rent(int.MaxValue);
+			var arr = EncodingArrayPool.Rent(25536);
 			try
 			{
 				Memory<byte> buffer = arr;
