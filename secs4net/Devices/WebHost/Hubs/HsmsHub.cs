@@ -58,28 +58,28 @@ namespace HsmsWebHost.Hubs
 			if (query == null)
 			{
 				BadRequest(httpContext.Response, "");
-				return (default, default, default);
+				return default;
 			}
 
 			if (!query.TryGetValue("ipaddress", out var ipadderss)
 				|| !IPAddress.TryParse(ipadderss, out var ip))
 			{
 				BadRequest(httpContext.Response, "ipaddress (IPv4 address)");
-				return (default, default, default);
+				return default;
 			}
 
 			if (!query.TryGetValue("port", out var port)
 				|| !int.TryParse(port, out var portNumber))
 			{
 				BadRequest(httpContext.Response, "port (integer)");
-				return (default, default, default);
+				return default;
 			}
 
 			if (!query.TryGetValue("active", out var active)
 				|| !bool.TryParse(active, out var isActive))
 			{
 				BadRequest(httpContext.Response, "active (boolean)");
-				return (default, default, default);
+				return default;
 			}
 
 			return (ip, portNumber, isActive);

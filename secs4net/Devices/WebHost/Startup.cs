@@ -49,7 +49,8 @@ namespace HsmsWebHost
                 app.UseDeveloperExceptionPage();
 				app.UseWebpackDevMiddleware(new WebpackDevMiddlewareOptions
 				{
-					HotModuleReplacement = true
+					HotModuleReplacement = true,
+                    ConfigFile = "node_modules/@vue/cli-service/webpack.config.js",
 				});
 			}
             else
