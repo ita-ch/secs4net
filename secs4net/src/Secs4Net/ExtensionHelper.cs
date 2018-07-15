@@ -31,17 +31,27 @@ namespace Secs4Net
         {
             if (value.Length == 0) return string.Empty;
             int length = value.Length * 3;
-            char[] chs = new char[length];
-            for (int ci = 0, i = 0; ci < length; ci += 3)
+#if NETCOREAPP
+			Span<char> chs = stackalloc char[length];
+#endif
+#if NETSTANDARD
+			var chs = new char[length];
+#endif
+			for (int ci = 0, i = 0; ci < length; ci += 3)
             {
                 byte num = value[i++];
                 chs[ci] = GetHexValue(num / 0x10);
                 chs[ci + 1] = GetHexValue(num % 0x10);
                 chs[ci + 2] = ' ';
             }
-            return new string(chs, 0, length - 1);
+#if NETCOREAPP
+			return new string(chs.Slice(0, length - 1));
+#endif
+#if NETSTANDARD
+			return new string(chs, 0, length - 1);
+#endif
 
-            char GetHexValue(int i) => (i < 10) ? (char)(i + 0x30) : (char)((i - 10) + 0x41);
+			char GetHexValue(in int i) => (i < 10) ? (char)(i + 0x30) : (char)((i - 10) + 0x41);
         }
 
 

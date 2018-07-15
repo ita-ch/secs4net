@@ -19,8 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Secs4Net.Sml\Secs4Net.Sml.csproj" />
-    <ProjectReference Include="..\Secs4Net\Secs4Net.csproj" />
+    <ProjectReference Include="..\..\src\Secs4Net.Sml\Secs4Net.Sml.csproj" />
   </ItemGroup>
 
   <Target Name="RunWebpack" AfterTargets="ComputeFilesToPublish">
