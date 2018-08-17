@@ -76,7 +76,7 @@ namespace Secs4Net
                     // item
                 };
 
-				var length = 10 + SecsItem.EncodeTo(result); // total length = item + header
+                var length = unchecked(10 + SecsItem.EncodeTo(result)); // total length = item + header
 
 				var msgLengthByte = BitConverter.GetBytes(length);
 				Array.Reverse(msgLengthByte);

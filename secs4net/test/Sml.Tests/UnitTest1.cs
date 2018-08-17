@@ -1,19 +1,17 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Secs4Net;
 using static Secs4Net.Item;
 using Secs4Net.Sml;
-using System;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using Xunit;
 
 namespace Sml.Tests
 {
-    [TestClass]
     public class UnitTest1
     {
-        [TestMethod]
+        [Fact]
         public void CanReadSmlFromString()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -30,11 +28,11 @@ namespace Sml.Tests
                 L(
                     B(0),
                     L()));
-            Assert.IsTrue(msg.IsMatch(expected));
 
+            Assert.True(msg.IsMatch(expected));
         }
 
-        [TestMethod]
+        [Fact]
         public async Task CanReadSmlFromStream()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -46,19 +44,18 @@ namespace Sml.Tests
     >
 .";
 
-            var stream = new MemoryStream(Encoding.ASCII.GetBytes(sml));
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(sml));
 
             var msgs = await  stream.ToSecsMessagesAsync();
 
-            Assert.IsTrue(msgs.Any());
-
+            Assert.True(msgs.Any());
 
             var expected = new SecsMessage(1, 14, item:
                 L(
                     B(0),
                     L()));
 
-            Assert.IsTrue(msgs[0].IsMatch(expected));
+            Assert.True(msgs[0].IsMatch(expected));
 
         }
     }

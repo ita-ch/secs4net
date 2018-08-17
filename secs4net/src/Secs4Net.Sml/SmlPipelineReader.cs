@@ -105,13 +105,13 @@ namespace Secs4Net.Sml
             {
                 if (buffer.IsSingleSegment)
                 {
-                    Encoding.ASCII.GetChars(buffer.First.Span, chars);
+                    Encoding.UTF8.GetChars(buffer.First.Span, chars);
                     return;
                 }
 
                 foreach (var segment in buffer)
                 {
-                    Encoding.ASCII.GetChars(segment.Span, chars);
+                    Encoding.UTF8.GetChars(segment.Span, chars);
 
                     chars = chars.Slice(segment.Length);
                 }

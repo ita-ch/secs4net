@@ -6,7 +6,7 @@ using static Secs4Net.Item;
 
 namespace Secs4Net.Sml
 {
-    static partial class SmlReaderExtensions
+    public static partial class SmlReaderExtensions
     {
         delegate T Parser<T>(ReadOnlySpan<char> span, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null);
 
@@ -225,50 +225,70 @@ namespace Secs4Net.Sml
             {
                 throw new SecsException("Unknown SML format :" + format.ToString());
             }
+        }
 
-            Item ParseValueItem<T>(in ReadOnlySpan<char> valueString, (Func<Item> emptyCreator, Func<T[], Item> creator, Parser<T> converter) parser)
+        static Item ParseValueItem<T>(in ReadOnlySpan<char> valueString, (Func<Item> emptyCreator, Func<T[], Item> creator, Parser<T> converter) parser)
+        {
+            return valueString.IsEmpty
+                ? parser.emptyCreator()
+                : parser.creator(GetValues(valueString, parser.converter));
+
+            T[] GetValues(ReadOnlySpan<char> values, Parser<T> converter)
             {
-                return valueString.IsEmpty
-                    ? parser.emptyCreator()
-                    : parser.creator(GetValues(valueString, parser.converter));
-
-                T[] GetValues(ReadOnlySpan<char> values, Parser<T> converter)
+                var result = new List<T>();
+                do
                 {
-                    var result = new List<T>();
-                    do
+                    int indexOfSeparator = values.IndexOf(' ');
+
+                    var v = indexOfSeparator == -1
+                        ? values
+                        : values.Slice(0, indexOfSeparator);
+
+                    if (!v.IsWhiteSpace())
                     {
-                        int indexOfSeparator = values.IndexOf(' ');
+                        result.Add(converter(v));
+                    }
 
-                        var v = indexOfSeparator == -1
-                            ? values
-                            : values.Slice(0, indexOfSeparator);
-
-                        if (!v.IsWhiteSpace())
-                        {
-                            result.Add(converter(v));
-                        }
-
-                        values = values.Slice(indexOfSeparator + 1).TrimStart();
-                    } while (!values.IsEmpty);
-                    return result.ToArray();
-                }
-            }
-
-            Item ParseStringItem(in ReadOnlySpan<char> str, (Func<Item> emptyCreator, Func<string, Item> creator) parser)
-            {
-                var value = str.TrimStart().TrimStart('"');
-
-                var index = value.IndexOf('"');
-                if (index == 0)
-                {
-                    return parser.emptyCreator();
-                }
-
-                return parser.creator(value.Slice(0, index).ToString());
+                    values = values.Slice(indexOfSeparator + 1).TrimStart();
+                } while (!values.IsEmpty);
+                return result.ToArray();
             }
         }
 
-        public static Item Create(this SecsFormat format, string smlValue) =>
-            Create(format.ToSml(), smlValue);
+        static Item ParseStringItem(in ReadOnlySpan<char> str, (Func<Item> emptyCreator, Func<string, Item> creator) parser)
+        {
+            var value = str.TrimStart().TrimStart('"');
+
+            var index = value.IndexOf('"');
+            if (index == 0)
+            {
+                return parser.emptyCreator();
+            }
+
+            return parser.creator(value.Slice(0, index).ToString());
+        }
+
+        static Item ToSml(this SecsFormat format, string smlValue)
+        {
+            switch (format)
+            {
+                case SecsFormat.Binary: return ParseValueItem(smlValue, BinaryParser);
+                case SecsFormat.Boolean: return ParseValueItem(smlValue, BoolParser);
+                case SecsFormat.ASCII: return ParseStringItem(smlValue, AParser);
+                case SecsFormat.JIS8: return ParseStringItem(smlValue, JParser);
+                case SecsFormat.I8: return ParseValueItem(smlValue, I8Parser);
+                case SecsFormat.I1: return ParseValueItem(smlValue, I1Parser);
+                case SecsFormat.I2: return ParseValueItem(smlValue, I2Parser);
+                case SecsFormat.I4: return ParseValueItem(smlValue, I4Parser);
+                case SecsFormat.F8: return ParseValueItem(smlValue, F8Parser);
+                case SecsFormat.F4: return ParseValueItem(smlValue, F4Parser);
+                case SecsFormat.U8: return ParseValueItem(smlValue, U8Parser);
+                case SecsFormat.U1: return ParseValueItem(smlValue, U1Parser);
+                case SecsFormat.U2: return ParseValueItem(smlValue, U2Parser);
+                case SecsFormat.U4: return ParseValueItem(smlValue, U4Parser);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(format), (int)format, "Invalid SecsFormat value");
+            }
+        }
     }
 }
