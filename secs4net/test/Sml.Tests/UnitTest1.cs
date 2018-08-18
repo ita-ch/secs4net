@@ -1,20 +1,24 @@
-using Secs4Net;
-using static Secs4Net.Item;
-using Secs4Net.Sml;
-using System.Text;
 using System.IO;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Secs4Net;
+using Secs4Net.Sml;
 using Xunit;
+using static Secs4Net.Item;
 
 namespace Sml.Tests
 {
     public class UnitTest1
     {
+        static UnitTest1()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
+
         [Fact]
         public void CanReadSmlFromString()
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var sml = @"S1F14EstablishCommunicationsRequestAck_Host_Ack:'S1F14' 
     <L[2]
         <B[1] 0x0 >
@@ -35,7 +39,6 @@ namespace Sml.Tests
         [Fact]
         public async Task CanReadSmlFromStream()
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             var sml = @"S1F14EstablishCommunicationsRequestAck_Host_Ack:'S1F14' 
     <L[2]
         <B[1] 0x0 >
@@ -46,7 +49,7 @@ namespace Sml.Tests
 
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(sml));
 
-            var msgs = await  stream.ToSecsMessagesAsync();
+            var msgs = await stream.ToSecsMessagesAsync();
 
             Assert.True(msgs.Any());
 
@@ -56,7 +59,21 @@ namespace Sml.Tests
                     L()));
 
             Assert.True(msgs[0].IsMatch(expected));
+        }
 
+        [Fact]
+        public void CanWriteSmlAsString()
+        {
+            var msg = new SecsMessage(1, 14, item:
+                L(
+                    B(0),
+                    L()));
+
+            var sml = msg.ToSml();
+
+            var expected = sml.ToSecsMessage();
+
+            Assert.True(msg.IsMatch(expected));
         }
     }
 }

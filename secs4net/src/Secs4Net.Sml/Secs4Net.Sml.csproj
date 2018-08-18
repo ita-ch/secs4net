@@ -14,6 +14,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\shared\Microsoft.Extensions.Buffers.MemoryPool.Sources\DiagnosticMemoryPool.cs" Link="DiagnosticMemoryPool.cs" />
+    <Compile Include="..\shared\Microsoft.Extensions.Buffers.MemoryPool.Sources\DiagnosticPoolBlock.cs" Link="DiagnosticPoolBlock.cs" />
+    <Compile Include="..\shared\Microsoft.Extensions.Buffers.MemoryPool.Sources\MemoryPoolBlock.cs" Link="MemoryPoolBlock.cs" />
+    <Compile Include="..\shared\Microsoft.Extensions.Buffers.MemoryPool.Sources\MemoryPoolSlab.cs" Link="MemoryPoolSlab.cs" />
+    <Compile Include="..\shared\Microsoft.Extensions.Buffers.MemoryPool.Sources\MemoryPoolThrowHelper.cs" Link="MemoryPoolThrowHelper.cs" />
+    <Compile Include="..\shared\Microsoft.Extensions.Buffers.MemoryPool.Sources\SlabMemoryPool.cs" Link="SlabMemoryPool.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Threading.Channels" Version="4.5.0" />
   </ItemGroup>
 

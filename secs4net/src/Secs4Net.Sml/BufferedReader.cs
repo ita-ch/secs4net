@@ -128,7 +128,7 @@ namespace Secs4Net.Sml
         }
 
         private static byte HexByteParser(ReadOnlySpan<char> str, NumberStyles style = NumberStyles.Integer, IFormatProvider provider = null) =>
-            byte.Parse(str.Slice(2), NumberStyles.AllowHexSpecifier);
+            byte.Parse(str, NumberStyles.AllowHexSpecifier);
 
         private static readonly (Func<Item>, Func<byte[], Item>, Parser<byte>)
             BinaryParser = (B, B, HexByteParser);
