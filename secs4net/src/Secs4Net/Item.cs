@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Buffers;
 using System.Buffers.Binary;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Secs4Net
 {
@@ -90,11 +86,12 @@ namespace Secs4Net
             if (format == SecsFormat.List)
             {
                 _list = Array.Empty<Item>();
-            }else
+            }
+            else
             {
                 _values = Array.Empty<byte>();
             }
-           
+
         }
 
         /// <summary>
@@ -111,7 +108,7 @@ namespace Secs4Net
             return new ItemValue<T>(_values)[0];
         }
 
-        public unsafe T GetValueOrDefault<T>(T defaultValue = default) where T:unmanaged
+        public unsafe T GetValueOrDefault<T>(T defaultValue = default) where T : unmanaged
         {
             if (Format == SecsFormat.List)
                 throw new InvalidOperationException("The item is a list");
@@ -310,22 +307,22 @@ namespace Secs4Net
         {
             var length = _values.Length;
 
-                if (Format == SecsFormat.List)
+            if (Format == SecsFormat.List)
+            {
+                buffer.Add(_values);
+                foreach (var subItem in Items)
                 {
-                    buffer.Add(_values);
-                    foreach (var subItem in Items)
-                    {
-                        length = unchecked(length + subItem.EncodeTo(buffer));
-                    }
+                    length = unchecked(length + subItem.EncodeTo(buffer));
                 }
-                else
-                {                    
-                    var itemHeader = GetEncodeBuffer(Format, _values.Length);
-                    length = unchecked(length + itemHeader.Length);
-                    buffer.Add(itemHeader);
-                    buffer.Add(_values);
-                }
-            
+            }
+            else
+            {
+                var itemHeader = GetEncodedHeader(Format, _values.Length);
+                length = unchecked(length + itemHeader.Length);
+                buffer.Add(itemHeader);
+                buffer.Add(_values);
+            }
+
             return length;
         }
 
@@ -334,7 +331,7 @@ namespace Secs4Net
         /// </summary>
         /// <param name="valueCount">Item value bytes length</param>
         /// <returns>header bytes + initial bytes of value </returns>
-        private static unsafe byte[] GetEncodeBuffer(SecsFormat format, int valueCount)
+        private static unsafe byte[] GetEncodedHeader(SecsFormat format, int valueCount)
         {
             Span<byte> lengthBytes = stackalloc byte[4];
             BinaryPrimitives.WriteInt32BigEndian(lengthBytes, valueCount);
@@ -369,7 +366,7 @@ namespace Secs4Net
         internal static Item BytesDecode(in SecsFormat format, in ReadOnlySequence<byte> data)
         {
             if (format == SecsFormat.List)
-                throw new ArgumentException(@"Invalid format", nameof(format));
+                throw new ArgumentException("Invalid format", nameof(format));
 
             return (data.Length == 0)
                 ? new Item(format)
