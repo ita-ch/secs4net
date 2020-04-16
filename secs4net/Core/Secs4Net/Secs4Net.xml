@@ -1,0 +1,309 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Secs4Net</name>
+    </assembly>
+    <members>
+        <member name="T:Secs4Net.DefaultSecsGemLogger">
+            <summary>
+            SECS Connector Logger
+            </summary>
+        </member>
+        <member name="F:Secs4Net.Item._rawData">
+            <summary>
+            if Format is List RawData is only header bytes.
+            otherwise include header and value bytes.
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.#ctor(System.Collections.Generic.IReadOnlyList{Secs4Net.Item})">
+            <summary>
+            List
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.#ctor(Secs4Net.SecsFormat,System.Array)">
+            <summary>
+            U1, U2, U4, U8
+            I1, I2, I4, I8
+            F4, F8
+            Boolean,
+            Binary
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.#ctor(Secs4Net.SecsFormat@,System.String)">
+            <summary>
+            A,J
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.#ctor(Secs4Net.SecsFormat@,System.Collections.IEnumerable)">
+            <summary>
+            Empty Item(none List)
+            </summary>
+            <param name="format"></param>
+            <param name="value"></param>
+        </member>
+        <member name="P:Secs4Net.Item.Items">
+            <summary>
+            List items
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.GetValue``1">
+            <summary>
+            get value by specific type
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.GetValues``1">
+            <summary>
+            get value array by specific type
+            </summary>
+        </member>
+        <member name="M:Secs4Net.Item.EncodeTo(System.Collections.Generic.List{System.ArraySegment{System.Byte}})">
+            <summary>
+            Encode item to raw data buffer
+            </summary>
+            <param name="buffer"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Secs4Net.Item.EncodeItem(System.Int32)">
+            <summary>
+            Encode Item header + value (initial array only)
+            </summary>
+            <param name="valueCount">Item value bytes length</param>
+            <returns>header bytes + initial bytes of value </returns>
+        </member>
+        <member name="M:Secs4Net.PrimaryMessageWrapper.ReplyAsync(Secs4Net.SecsMessage)">
+            <summary>
+            Each PrimaryMessageWrapper can invoke Reply method once.
+            If the message already replied, will return false.
+            </summary>
+            <param name="replyMessage"></param>
+            <returns>true, if reply message sent.</returns>
+        </member>
+        <member name="T:Secs4Net.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F1">
+            <summary>
+              Looks up a localized string similar to Unrecognized Device Id.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F11">
+            <summary>
+              Looks up a localized string similar to Data Too Long.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F13">
+            <summary>
+              Looks up a localized string similar to Conversation Timeout.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F3">
+            <summary>
+              Looks up a localized string similar to Unrecognized Stream Type.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F5">
+            <summary>
+              Looks up a localized string similar to Unrecognized Function Type.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F7">
+            <summary>
+              Looks up a localized string similar to Illegal Data.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9F9">
+            <summary>
+              Looks up a localized string similar to Transaction Timer Timeout.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.S9Fy">
+            <summary>
+              Looks up a localized string similar to S9Fy message reply..
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.SecsMessageStreamNumberMustLessThan127">
+            <summary>
+              Looks up a localized string similar to Stream number must be less than 127.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.SxF0">
+            <summary>
+              Looks up a localized string similar to Equipment is not online mode.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.Resources.T3Timeout">
+            <summary>
+              Looks up a localized string similar to T3 Timeout!.
+            </summary>
+        </member>
+        <member name="T:Secs4Net.SecsFormat">
+            <summary>
+            The enumeration of SECS item value format 
+            </summary>
+        </member>
+        <member name="E:Secs4Net.SecsGem.ConnectionChanged">
+            <summary>
+            HSMS connection state changed event
+            </summary>
+        </member>
+        <member name="E:Secs4Net.SecsGem.PrimaryMessageReceived">
+            <summary>
+            Primary message received event
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.State">
+            <summary>
+            Connection state
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.DeviceId">
+            <summary>
+            Device Id.
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.T3">
+            <summary>
+            T3 timer interval 
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.T5">
+            <summary>
+            T5 timer interval
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.T6">
+            <summary>
+            T6 timer interval
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.T7">
+            <summary>
+            T7 timer interval
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.T8">
+            <summary>
+            T8 timer interval
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.LinkTestInterval">
+            <summary>
+            Linking test timer interval
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.LinkTestEnable">
+            <summary>
+            get or set linking test timer enable or not 
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsGem.DeviceIpAddress">
+            <summary>
+            remote device endpoint address
+            </summary>
+        </member>
+        <member name="M:Secs4Net.SecsGem.#ctor(System.Boolean,System.Net.IPAddress,System.Int32,System.Int32)">
+            <summary>
+            constructor
+            </summary>
+            <param name="isActive">passive or active mode</param>
+            <param name="ip">if active mode it should be remote device address, otherwise local listener address</param>
+            <param name="port">if active mode it should be remote device listener's port</param>
+            <param name="receiveBufferSize">Socket receive buffer size</param>
+        </member>
+        <member name="M:Secs4Net.SecsGem.SendAsync(Secs4Net.SecsMessage)">
+            <summary>
+            Asynchronously send message to device .
+            </summary>
+            <param name="msg">primary message</param>
+            <returns>secondary message</returns>
+        </member>
+        <member name="P:Secs4Net.SecsMessage.S">
+            <summary>
+            message stream number
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsMessage.F">
+            <summary>
+            message function number
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsMessage.ReplyExpected">
+            <summary>
+            expect reply message
+            </summary>
+        </member>
+        <member name="P:Secs4Net.SecsMessage.SecsItem">
+            <summary>
+            the root item of message
+            </summary>
+        </member>
+        <member name="M:Secs4Net.SecsMessage.#ctor(System.Byte,System.Byte,System.String,Secs4Net.Item,System.Boolean)">
+            <summary>
+            constructor of SecsMessage
+            </summary>
+            <param name="s">message stream number</param>
+            <param name="f">message function number</param>
+            <param name="replyExpected">expect reply message</param>
+            <param name="name"></param>
+            <param name="item">root item</param>
+        </member>
+        <member name="T:Secs4Net.StreamDecoder">
+            <summary>
+             Stream based HSMS/SECS-II message decoder
+            </summary>
+        </member>
+        <member name="P:Secs4Net.StreamDecoder.BufferOffset">
+            <summary>
+            Control the range of data receiver 
+            </summary>
+        </member>
+        <member name="T:Secs4Net.StreamDecoder.Decoder">
+            <summary>
+            decoder step
+            </summary>
+            <param name="length"></param>
+            <param name="need"></param>
+            <returns>pipeline decoder index</returns>
+        </member>
+        <member name="F:Secs4Net.StreamDecoder._decoders">
+            <summary>
+            decode pipelines
+            </summary>
+        </member>
+        <member name="F:Secs4Net.StreamDecoder._buffer">
+            <summary>
+            data buffer
+            </summary>
+        </member>
+        <member name="F:Secs4Net.StreamDecoder._decodeIndex">
+            <summary>
+            Control the range of data decoder
+            </summary>
+        </member>
+        <member name="F:Secs4Net.StreamDecoder._previousRemainedCount">
+            <summary>
+            previous decoded remained count
+            </summary>
+        </member>
+        <member name="M:Secs4Net.StreamDecoder.Decode(System.Int32)">
+            <summary>
+            
+            </summary>
+            <param name="length">data length</param>
+            <returns>true, if need more data to decode completed message. otherwise, return false</returns>
+        </member>
+    </members>
+</doc>

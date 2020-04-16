@@ -44,9 +44,9 @@ namespace Secs4Net.Sml
             await writer.WriteAsync('.');
         }
 
-        public static void Write(this Item item, TextWriter writer, int indent = 4)
+        public static void Write(this Item item, TextWriter writer, int indent = 4,int level = 0)
         {
-            var indentStr = new string(' ', indent);
+            var indentStr = new string(' ', indent * level);
             writer.Write(indentStr);
             writer.Write('<');
             writer.Write(item.Format.ToSml());
@@ -59,7 +59,7 @@ namespace Secs4Net.Sml
                     writer.WriteLine();
                     var items = item.Items;
 					for (int i = 0, count = items.Count; i < count; i++)
-						items[i].Write(writer, indent << 1);
+						items[i].Write(writer, indent ,level+1);
                     writer.Write(indentStr);
                     break;
                 case SecsFormat.ASCII:
