@@ -9,10 +9,10 @@
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
     <Company />
-    <Authors>mkjeff</Authors>
+    <Authors>mkjeff,Infotech</Authors>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/mkjeff/secs4net</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/mkjeff/secs4net/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <RootNamespace>Secs4Net</RootNamespace>
     <AssemblyName>Secs4Net</AssemblyName>
   </PropertyGroup>
@@ -25,6 +25,11 @@
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <UserSecretsId>225e4ac0-a121-47fa-a072-ef87bc73f411</UserSecretsId>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>D:\SWDevelopment\Secs4Net\Core\Secs4Net\Secs4Net.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
