@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -229,26 +230,40 @@ namespace Secs4Net.Json
         // Define other methods and classes here
         public static Item ToItem(this JObject jobject)
         {
-            var json = (JProperty)jobject.First;
-
-            switch (json.Name)
+            
+            var format = jobject.Children().FirstOrDefault(c => ((JProperty) c).Name == "Format");
+            
+            var values =  jobject.Children().FirstOrDefault(c => ((JProperty) c).Name == "Values");
+            switch (format.First.Value<string>())
             {
-                case nameof(SecsFormat.List): return L(json.Value.Value<JArray>().Values<JObject>().Select(ToItem));
-                case nameof(SecsFormat.ASCII): return A(json.Value.Value<string>());
-                case nameof(SecsFormat.JIS8): return J(json.Value.Value<string>());
-                case nameof(SecsFormat.Binary): return B(json.Value.Values<byte>());
-                case nameof(SecsFormat.Boolean): return Boolean(json.Value.Values<bool>());
-                case nameof(SecsFormat.F4): return F4(json.Value.Values<float>());
-                case nameof(SecsFormat.F8): return F8(json.Value.Values<double>());
-                case nameof(SecsFormat.I1): return I1(json.Value.Values<sbyte>());
-                case nameof(SecsFormat.I2): return I2(json.Value.Values<short>());
-                case nameof(SecsFormat.I4): return I4(json.Value.Values<int>());
-                case nameof(SecsFormat.I8): return I8(json.Value.Values<long>());
-                case nameof(SecsFormat.U1): return U1(json.Value.Values<byte>());
-                case nameof(SecsFormat.U2): return U2(json.Value.Values<ushort>());
-                case nameof(SecsFormat.U4): return U4(json.Value.Values<uint>());
-                case nameof(SecsFormat.U8): return U8(json.Value.Values<ulong>());
-                default: throw new ArgumentOutOfRangeException($"Unknown item format: {json.Name}");
+	            case nameof(SecsFormat.List):
+	            {
+		            var children = jobject.Children().FirstOrDefault(c => ((JProperty) c).Name == "Items")?.First.Values<JObject>();
+		            if (children != null)
+		            {
+			            var itemList = children.Select(ToItem).ToList();
+			            return L(itemList);
+		            }
+		            else
+		            {
+			            return L();
+		            }
+	            }
+                case nameof(SecsFormat.ASCII): return A(values.First.Value<string>());
+                case nameof(SecsFormat.JIS8): return J(values.First.Value<string>());
+                case nameof(SecsFormat.Binary): return B(values.First.Values<byte>());
+                case nameof(SecsFormat.Boolean): return Boolean(values.First.Values<bool>());
+                case nameof(SecsFormat.F4): return F4(values.First.Values<float>());
+                case nameof(SecsFormat.F8): return F8(values.First.Values<double>());
+                case nameof(SecsFormat.I1): return I1(values.First.Values<sbyte>());
+                case nameof(SecsFormat.I2): return I2(values.First.Values<short>());
+                case nameof(SecsFormat.I4): return I4(values.First.Values<int>());
+                case nameof(SecsFormat.I8): return I8(values.First.Values<long>());
+                case nameof(SecsFormat.U1): return U1(values.First.Values<byte>());
+                case nameof(SecsFormat.U2): return U2(values.First.Values<ushort>());
+                case nameof(SecsFormat.U4): return U4(values.First.Values<uint>());
+                case nameof(SecsFormat.U8): return U8(values.First.Values<ulong>());
+                default: throw new ArgumentOutOfRangeException($"Unknown item format: ");
             }
         }
     }
