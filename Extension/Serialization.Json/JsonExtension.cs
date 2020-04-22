@@ -238,13 +238,16 @@ namespace Secs4Net.Json
             {
 	            case nameof(SecsFormat.List):
 	            {
-		            var itemList = new List<Item>();
-		            var children = jobject.Children().FirstOrDefault(c => ((JProperty) c).Name == "Items").First.Values<JObject>();
-		            foreach (var child in children)
+		            var children = jobject.Children().FirstOrDefault(c => ((JProperty) c).Name == "Items")?.First.Values<JObject>();
+		            if (children != null)
 		            {
-			            itemList.Add(ToItem(child));
+			            var itemList = children.Select(ToItem).ToList();
+			            return L(itemList);
 		            }
-	                return L(itemList);
+		            else
+		            {
+			            return L();
+		            }
 	            }
                 case nameof(SecsFormat.ASCII): return A(values.First.Value<string>());
                 case nameof(SecsFormat.JIS8): return J(values.First.Value<string>());
