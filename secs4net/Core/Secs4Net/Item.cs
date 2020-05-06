@@ -23,17 +23,48 @@ namespace Secs4Net
         /// </summary>
         private Item(IReadOnlyList<Item> items)
         {
-            if (items.Count > byte.MaxValue)
-                throw new ArgumentOutOfRangeException(nameof(items) + "." + nameof(items.Count), items.Count,
-                    @"List items length out of range, max length: 255");
+           // if (items.Count > byte.MaxValue)
+                //throw new ArgumentOutOfRangeException(nameof(items) + "." + nameof(items.Count), items.Count,
+                  //  @"List items length out of range, max length: 255");
 
             Format = SecsFormat.List;
             _values = items;
-            _rawData = new Lazy<byte[]>(()
+            int count = Unsafe.As<IReadOnlyList<Item>>(_values).Count;
+            if (count < 256)
+            {
+	            _rawData = new Lazy<byte[]>(()
                 => new byte[]{
                     (byte)SecsFormat.List | 1,
-                    unchecked((byte)(Unsafe.As<IReadOnlyList<Item>>(_values).Count))
+                    unchecked((byte)count)
                 });
+
+            }
+            else if (count < 65535)
+            {
+	            byte val1 = (byte)((count & 0xFF00)/0xFF);
+	            byte val2 =(byte) (count & 0x00FF);
+	            _rawData = new Lazy<byte[]>(()
+		            => new byte[]{
+			            (byte)SecsFormat.List | 2,
+			            unchecked(val1),
+			            unchecked(val2)
+		            });
+            }
+            else if (Unsafe.As<IReadOnlyList<Item>>(_values).Count < 16777215)
+            {
+	            _rawData = new Lazy<byte[]>(()
+		            => new byte[]{
+			            (byte)SecsFormat.List | 3,
+			            unchecked((byte)((count & 0xFF0000)/0xFFFF)),
+			            unchecked((byte)((count & 0x00FF00)/0xFF)),
+			            unchecked((byte)(count & 0x0000FF))
+		            });
+            }
+            else
+            {
+	            throw new ArgumentOutOfRangeException(nameof(items) + "." + nameof(items.Count), items.Count,
+	              @"List items length out of range, max length: 16777215");
+            }
         }
 
         /// <summary>
