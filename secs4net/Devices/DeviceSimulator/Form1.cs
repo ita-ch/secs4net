@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 using Secs4Net;
 using System.Net;
 using System.Drawing;
+using System.Threading.Tasks;
 using Secs4Net.Sml;
 
 namespace SecsDevice
@@ -15,6 +17,9 @@ namespace SecsDevice
 
         public Form1() {
             InitializeComponent();
+            Settings1.Default.Reload();
+            txtReplySeconary.Text = Settings1.Default.Response;
+            txtSendPrimary.Text = Settings1.Default.Message;
 
             radioActiveMode.DataBindings.Add("Enabled", btnEnable, "Enabled");
             radioPassiveMode.DataBindings.Add("Enabled", btnEnable, "Enabled");
@@ -23,6 +28,10 @@ namespace SecsDevice
             numDeviceId.DataBindings.Add("Enabled", btnEnable, "Enabled");
             numBufferSize.DataBindings.Add("Enabled", btnEnable, "Enabled");
             recvMessageBindingSource.DataSource = recvBuffer;
+            txtAddress.Text = Settings1.Default.IPAdress;
+            numPort.Value = Settings1.Default.Port;
+            radioActiveMode.Checked = Settings1.Default.ActiveMode;
+            radioPassiveMode.Checked = !Settings1.Default.ActiveMode;
             Application.ThreadException += (sender, e) => MessageBox.Show(e.Exception.ToString());
             AppDomain.CurrentDomain.UnhandledException += (sender, e) => MessageBox.Show(e.ExceptionObject.ToString());
             _logger = new SecsLogger(this);
@@ -33,7 +42,7 @@ namespace SecsDevice
             _secsGem?.Dispose();
             _secsGem = new SecsGem(
                 radioActiveMode.Checked,
-                IPAddress.Parse(txtAddress.Text),
+                radioActiveMode.Checked?IPAddress.Parse(txtAddress.Text):IPAddress.Any,
                 (int)numPort.Value,
                 (int)numBufferSize.Value)
             { Logger = _logger, DeviceId = (ushort)numDeviceId.Value };
@@ -48,16 +57,28 @@ namespace SecsDevice
                 });
             };
 
+            Settings1.Default.ActiveMode = radioActiveMode.Checked;
+            Settings1.Default.Save();
+
             _secsGem.PrimaryMessageReceived += PrimaryMessageReceived;
 
             btnEnable.Enabled = false;
             _secsGem.Start();
             btnDisable.Enabled = true;
+
+
         }
 
         private void PrimaryMessageReceived(object sender, PrimaryMessageWrapper e)
         {
-            this.Invoke(new MethodInvoker(() => recvBuffer.Add(e)));
+	        if (CheckBoxAutoResponse.Checked)
+	        {
+		        AutoReply(e);
+	        }
+	        else
+	        {
+		        this.Invoke(new MethodInvoker(() => recvBuffer.Add(e)));
+	        }
         }
 
         private void btnDisable_Click(object sender, EventArgs e)
@@ -73,7 +94,7 @@ namespace SecsDevice
 
         private async void btnSendPrimary_Click(object sender, EventArgs e)
         {
-            if (_secsGem.State != ConnectionState.Selected)
+            if (_secsGem == null || _secsGem.State != ConnectionState.Selected)
                 return;
             if (string.IsNullOrWhiteSpace(txtSendPrimary.Text))
                 return;
@@ -92,6 +113,7 @@ namespace SecsDevice
         private void lstUnreplyMsg_SelectedIndexChanged(object sender, EventArgs e) {
             var receivedMessage = lstUnreplyMsg.SelectedItem as PrimaryMessageWrapper;
             txtRecvPrimary.Text = receivedMessage?.Message.ToSml();
+            
         }
 
         private async void btnReplySecondary_Click(object sender, EventArgs e)
@@ -106,6 +128,8 @@ namespace SecsDevice
             recvBuffer.Remove(recv);
             txtRecvPrimary.Clear();
         }
+
+       
 
         private async void btnReplyS9F7_Click(object sender, EventArgs e)
         {
@@ -175,6 +199,117 @@ namespace SecsDevice
                     _form.richTextBox1.AppendText($"{msg}\n");
                 });
             }
+        }
+
+        private void txtReplySeconary_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty( txtReplySeconary.Text))
+            { 
+	            Settings1.Default.Response = txtReplySeconary.Text;
+            
+	            Settings1.Default.Save();
+            }
+        }
+
+        private void txtSendPrimary_TextChanged(object sender, EventArgs e)
+        {
+	        if (!string.IsNullOrEmpty(txtSendPrimary.Text))
+	        {
+		        Settings1.Default.Message = txtSendPrimary.Text;
+
+				Settings1.Default.Save();
+	        }
+        }
+
+        private void txtAddress_TextChanged(object sender, EventArgs e)
+        {
+	        if (!string.IsNullOrEmpty(txtAddress.Text))
+	        {
+		        Settings1.Default.IPAdress = txtAddress.Text;
+
+		        Settings1.Default.Save();
+	        }
+        }
+
+        private void numPort_ValueChanged(object sender, EventArgs e)
+        {
+	        if (!string.IsNullOrEmpty(txtSendPrimary.Text))
+	        {
+		        Settings1.Default.Port = numPort.Value;
+
+		        Settings1.Default.Save();
+	        }
+        }
+
+        private void richTextBox1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+	        richTextBox1.Text = "";
+        }
+
+        private async void buttonOnlineRequest_Click(object sender, EventArgs e)
+        {
+	        if (_secsGem.State != ConnectionState.Selected)
+		        return;
+	        
+	        try
+	        {
+                var item = Item.L();
+		        var message = new SecsMessage(1, 13, "Online Request",item, true);
+                
+		        var reply = await _secsGem.SendAsync(message);
+		        txtRecvSecondary.Text = reply.ToSml();
+	        }
+	        catch (SecsException ex)
+	        {
+		        txtRecvSecondary.Text = ex.Message;
+	        }
+        }
+
+        private async void AutoReply(PrimaryMessageWrapper pmw)
+        {
+	        // Get the Stream
+	        switch (pmw.Message.S)
+	        {
+		        case 1:
+		        {
+			        switch (pmw.Message.F)
+			        {
+				        case 1:
+					        await pmw.ReplyAsync(new SecsMessage(1, 2, "I am here",
+						        Item.L()));
+					        return;
+				        case 13:
+					        await pmw.ReplyAsync(new SecsMessage(1, 14, "Establish Communications Request Acknowledge",
+						        Item.L()));
+					        return;
+			        }
+
+			        break;
+		        }
+		        case 14:
+		        {
+
+			        if (pmw.Message.F == 1)
+			        {
+				        await pmw.ReplyAsync(txtReplySeconary.Text.ToSecsMessage());
+				        return;
+			        }
+
+			        break;
+		        }
+
+
+
+
+	        }
+
+	        await pmw.ReplyAsync(new SecsMessage(pmw.Message.S, (byte) ((int) pmw.Message.F + 1),
+		        "SuperResponse", Item.B(0)));
+        }
+
+        private void txtRecvSecondary_DoubleClick(object sender, EventArgs e)
+        {
+	        txtRecvSecondary.Text = "";
         }
     }
 }
