@@ -146,7 +146,7 @@
 			// 
 			this.numBufferSize.Location = new System.Drawing.Point(535, 33);
 			this.numBufferSize.Maximum = new decimal(new int[] {
-            65535,
+			16777216,
             0,
             0,
             0});
@@ -154,7 +154,7 @@
 			this.numBufferSize.Size = new System.Drawing.Size(77, 20);
 			this.numBufferSize.TabIndex = 11;
 			this.numBufferSize.Value = new decimal(new int[] {
-            65535,
+			16777216,
             0,
             0,
             0});

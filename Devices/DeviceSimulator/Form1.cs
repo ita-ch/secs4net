@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using Secs4Net;
 using System.Net;
 using System.Drawing;
+using System.Threading.Tasks;
 using Secs4Net.Sml;
 
 namespace SecsDevice
@@ -93,7 +94,7 @@ namespace SecsDevice
 
         private async void btnSendPrimary_Click(object sender, EventArgs e)
         {
-            if (_secsGem.State != ConnectionState.Selected)
+            if (_secsGem == null || _secsGem.State != ConnectionState.Selected)
                 return;
             if (string.IsNullOrWhiteSpace(txtSendPrimary.Text))
                 return;
@@ -274,7 +275,7 @@ namespace SecsDevice
 			        switch (pmw.Message.F)
 			        {
 				        case 1:
-					        await pmw.ReplyAsync(new SecsMessage(1, 14, "Establish Communications Request Acknowledge",
+					        await pmw.ReplyAsync(new SecsMessage(1, 2, "I am here",
 						        Item.L()));
 					        return;
 				        case 13:
