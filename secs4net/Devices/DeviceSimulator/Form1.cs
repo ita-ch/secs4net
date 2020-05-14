@@ -46,7 +46,8 @@ namespace SecsDevice
                 (int)numPort.Value,
                 (int)numBufferSize.Value)
             { Logger = _logger, DeviceId = (ushort)numDeviceId.Value };
-
+            _secsGem.LinkTestEnable = true;
+            _secsGem.LinkTestInterval = 60000;
             _secsGem.ConnectionChanged += delegate
             {
                 this.Invoke((MethodInvoker)delegate
@@ -71,13 +72,24 @@ namespace SecsDevice
 
         private void PrimaryMessageReceived(object sender, PrimaryMessageWrapper e)
         {
-	        if (CheckBoxAutoResponse.Checked)
+	        try
 	        {
-		        AutoReply(e);
+
+		        if (CheckBoxAutoResponse.Checked)
+		        {
+			        AutoReply(e);
+		        }
+		        else
+		        {
+			        this.Invoke(new MethodInvoker(() => recvBuffer.Add(e)));
+		        }
 	        }
-	        else
+	        catch (Exception ee)
 	        {
-		        this.Invoke(new MethodInvoker(() => recvBuffer.Add(e)));
+		        Invoke((MethodInvoker)delegate {
+			        richTextBox1.SelectionColor = Color.Red;
+			        richTextBox1.AppendText($"Exception PrimaryMessageReceived\n{ee}\n");
+		        });
 	        }
         }
 
@@ -267,44 +279,55 @@ namespace SecsDevice
 
         private async void AutoReply(PrimaryMessageWrapper pmw)
         {
-	        // Get the Stream
-	        switch (pmw.Message.S)
+	        try
 	        {
-		        case 1:
+		        // Get the Stream
+		        switch (pmw.Message.S)
 		        {
-			        switch (pmw.Message.F)
+			        case 1:
 			        {
-				        case 1:
-					        await pmw.ReplyAsync(new SecsMessage(1, 2, "I am here",
-						        Item.L()));
+				        switch (pmw.Message.F)
+				        {
+					        case 1:
+						        await pmw.ReplyAsync(new SecsMessage(1, 2, "I am here",
+							        Item.L()));
+						        return;
+					        case 13:
+						        await pmw.ReplyAsync(new SecsMessage(1, 14,
+							        "Establish Communications Request Acknowledge",
+							        Item.L()));
+						        return;
+				        }
+
+				        break;
+			        }
+			        case 14:
+			        {
+
+				        if (pmw.Message.F == 1)
+				        {
+					        await pmw.ReplyAsync(txtReplySeconary.Text.ToSecsMessage());
 					        return;
-				        case 13:
-					        await pmw.ReplyAsync(new SecsMessage(1, 14, "Establish Communications Request Acknowledge",
-						        Item.L()));
-					        return;
+				        }
+
+				        break;
 			        }
 
-			        break;
-		        }
-		        case 14:
-		        {
 
-			        if (pmw.Message.F == 1)
-			        {
-				        await pmw.ReplyAsync(txtReplySeconary.Text.ToSecsMessage());
-				        return;
-			        }
 
-			        break;
+
 		        }
 
-
-
-
+		        await pmw.ReplyAsync(new SecsMessage(pmw.Message.S, (byte) ((int) pmw.Message.F + 1),
+			        "SuperResponse", Item.B(0)));
 	        }
-
-	        await pmw.ReplyAsync(new SecsMessage(pmw.Message.S, (byte) ((int) pmw.Message.F + 1),
-		        "SuperResponse", Item.B(0)));
+	        catch (Exception ee)
+	        {
+		        Invoke((MethodInvoker)delegate {
+			        richTextBox1.SelectionColor = Color.Red;
+			        richTextBox1.AppendText($"Exception AutoResponse\n{ee}\n");
+		        });
+	        }
         }
 
         private void txtRecvSecondary_DoubleClick(object sender, EventArgs e)
