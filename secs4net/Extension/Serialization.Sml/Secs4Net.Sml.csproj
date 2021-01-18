@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.0.1</Version>
+    <Version>2.0.2</Version>
     <PackageId>Infotech.Secs4Net.Sml</PackageId>
     <Product>Secs4Net.Sml</Product>
     <Company />

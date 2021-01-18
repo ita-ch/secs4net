@@ -5,13 +5,16 @@
     <PackageId>Infotech.Secs4Net.Json</PackageId>
     <Product>Secs4Net.Json</Product>
     <Company />
-    <Authors>mkjeff</Authors>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <Authors>mkjeff,Infotech</Authors>
+    <AssemblyVersion>2.0.1.0</AssemblyVersion>
+    <FileVersion>2.0.1.0</FileVersion>
     <AssemblyName>Secs4Net.Json</AssemblyName>
     <RootNamespace>Secs4Net.Json</RootNamespace>
     <Version>2.0.1</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>Secs4Net with Json Extension</Description>
+    <PackageProjectUrl>https://github.com/mkjeff/secs4net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mkjeff/secs4net</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
