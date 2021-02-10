@@ -54,7 +54,7 @@ namespace SecsDevice
                 {
                     lbStatus.Text = _secsGem.State.ToString();
                     if (_secsGem.State == ConnectionState.Selected && _secsGem.IsActive)
-	                    _secsGem.SendAsync(new SecsMessage(1, 13,"Online Request",Item.L()));
+	                    _secsGem.SendAsync(new SecsMessage(1, 13,"Online Request",Item.L(Item.A(),Item.A())));
                 });
             };
 
