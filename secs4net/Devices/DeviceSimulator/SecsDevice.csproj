@@ -2,24 +2,19 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <Version>1.0.0</Version>
-    <NeutralLanguage>en</NeutralLanguage>
-    <PackageTags>WPF, LineHandler</PackageTags>
-    <Copyright>Infotech</Copyright>
-    <Authors>Infotech</Authors>
-    <Description>SecsGEm Sim Device</Description>
-    <ILMergeUseILRepack>true</ILMergeUseILRepack>
+    <RootNamespace>SecsDevice</RootNamespace>
+    <AssemblyName>SecsDevice</AssemblyName>
   </PropertyGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Infotech.Targets.ILMerge" Version="1.7.0" PrivateAssets="all" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Secs4Net\Secs4Net.csproj" />
     <ProjectReference Include="..\..\Extension\Serialization.Sml\Secs4Net.Sml.csproj" />
   </ItemGroup>
-
+  
 </Project>

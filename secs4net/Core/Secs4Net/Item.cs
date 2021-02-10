@@ -92,7 +92,7 @@ namespace Secs4Net
         /// <summary>
         /// A,J
         /// </summary>
-        private Item(in SecsFormat format, string value)
+        private Item(SecsFormat format, string value)
         {
             Format = format;
             _values = value;
@@ -141,13 +141,19 @@ namespace Secs4Net
         public T GetValue<T>() where T : unmanaged
         {
             if (Format == SecsFormat.List)
+            {
                 throw new InvalidOperationException("The item is a list");
+            }
 
             if (Format == SecsFormat.ASCII || Format == SecsFormat.JIS8)
+            {
                 throw new InvalidOperationException("The item is a string");
+            }
 
             if (_values is T[] arr)
+            {
                 return arr[0];
+            }
 
             throw new InvalidOperationException("The type is incompatible");
         }
@@ -162,13 +168,19 @@ namespace Secs4Net
         public T[] GetValues<T>() where T : unmanaged
         {
             if (Format == SecsFormat.List)
+            {
                 throw new InvalidOperationException("The item is list");
+            }
 
             if (Format == SecsFormat.ASCII || Format == SecsFormat.JIS8)
+            {
                 throw new InvalidOperationException("The item is a string");
+            }
 
             if (_values is T[] arr)
+            {
                 return arr;
+            }
 
             throw new InvalidOperationException("The type is incompatible");
         }
@@ -176,13 +188,19 @@ namespace Secs4Net
         public bool IsMatch(Item target)
         {
             if (Format != target.Format)
+            {
                 return false;
+            }
 
             if (Count != target.Count)
+            {
                 return target.Count == 0;
+            }
 
             if (Count == 0)
+            {
                 return true;
+            }
 
             switch (target.Format)
             {
@@ -209,10 +227,23 @@ namespace Secs4Net
                     byte* x1 = p1, x2 = p2;
                     int l = length;
                     for (int i = 0; i < l / 8; i++, x1 += 8, x2 += 8)
-                        if (*((long*)x1) != *((long*)x2)) return false;
-                    if ((l & 4) != 0) { if (*((int*)x1) != *((int*)x2)) return false; x1 += 4; x2 += 4; }
-                    if ((l & 2) != 0) { if (*((short*)x1) != *((short*)x2)) return false; x1 += 2; x2 += 2; }
-                    if ((l & 1) != 0) if (*x1 != *x2) return false;
+                    {
+                        if (*((long*)x1) != *((long*)x2))
+                        {
+                            return false;
+                        }
+                    }
+
+                    if ((l & 4) != 0) { if (*((int*)x1) != *((int*)x2)) { return false; } x1 += 4; x2 += 4; }
+                    if ((l & 2) != 0) { if (*((short*)x1) != *((short*)x2)) { return false; } x1 += 2; x2 += 2; }
+                    if ((l & 1) != 0)
+                    {
+                        if (*x1 != *x2)
+                        {
+                            return false;
+                        }
+                    }
+
                     return true;
                 }
             }
@@ -220,8 +251,13 @@ namespace Secs4Net
             bool IsMatch(IReadOnlyList<Item> a, IReadOnlyList<Item> b)
             {
                 for (int i = 0, count = a.Count; i < count; i++)
+                {
                     if (!a[i].IsMatch(b[i]))
+                    {
                         return false;
+                    }
+                }
+
                 return true;
             }
         }
@@ -376,8 +412,13 @@ namespace Secs4Net
             uint length = unchecked((uint)bytes.Length);
             buffer.Add(new ArraySegment<byte>(bytes));
             if (Format == SecsFormat.List)
+            {
                 foreach (var subItem in Items)
+                {
                     length += subItem.EncodeTo(buffer);
+                }
+            }
+
             return length;
         }
 
